@@ -133,48 +133,6 @@ class sportController {
         }
     }
     ///rounds/hightlight
-    async getRoundHightlight(req, res) {
-        const { nation } = req.params;
-        const info = await checkNation(nation);
-        const {
-            currentRound: { round },
-        } = await getRequest(
-            `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/rounds`
-        );
-        const { data } = await axios.get(
-            `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/events/round/${round}`
-        );
-
-        if (data) {
-            const list = data.events.map((item) => {
-                return {
-                    match: {
-                        name: `${item.homeTeam.name} - ${item.awayTeam.name}`,
-                        slug: item.slug,
-                        home: {
-                            name: item.homeTeam.name,
-                            short: item.homeTeam.shortName,
-                            id: item.homeTeam.id,
-                        },
-                        away: {
-                            name: item.awayTeam.name,
-                            short: item.awayTeam.shortName,
-                            id: item.awayTeam.id,
-                        },
-                        time: item.startTimestamp,
-                        status: item.status,
-                    },
-                };
-            });
-            return res.status(200).json({
-                message: "success",
-                data: list,
-            });
-        }
-        return res.status(500).json({
-            err: "Internal sever error",
-        });
-    }
 
     // /match"
     async getMatch(req, res) {
