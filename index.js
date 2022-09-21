@@ -9,7 +9,13 @@ const path = require("path");
 
 const app = express();
 //hake
-app.use(cors());
+app.use(
+    cors({
+        credentials: true,
+        origin: ["http://localhost:3000", "https://league88.netlify.app"],
+        exposedHeaders: ["set-cookie"],
+    })
+);
 
 routerCustom(app);
 
