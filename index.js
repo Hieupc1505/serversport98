@@ -5,17 +5,14 @@ require("dotenv").config();
 const express = require("express");
 const routerCustom = require("./src/routers/index");
 const cors = require("cors");
-const path = require("path");
+const bodyParser = require("body-parse");
 
 const app = express();
-//hake
-app.use(
-    cors({
-        credentials: true,
-        origin: ["http://localhost:3000", "https://league88.netlify.app"],
-        exposedHeaders: ["set-cookie"],
-    })
-);
+
+app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use(bodyParser.json());
+app.use(cors());
 
 routerCustom(app);
 
