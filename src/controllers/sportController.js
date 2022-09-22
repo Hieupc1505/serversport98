@@ -1,5 +1,6 @@
 const nations = require("../Library/nation.json");
 const { default: axios } = require("axios");
+const createError = require("http-errors");
 
 async function getLastFiveMatch(link) {
     const { data } = await axios.get(link);
@@ -72,7 +73,7 @@ const checkNation = async (nation, s = 0) => {
 
 class sportController {
     // /charts/:id
-    async getCharts(req, res) {
+    async getCharts(req, res, next) {
         //bang xep hang
         try {
             const { id, nation } = req.params;
@@ -111,10 +112,11 @@ class sportController {
             });
         } catch (err) {
             console.log(err);
+            next(createError("500", "Internal server error at getCharts"));
         }
     }
     // /rounds/:id
-    async getRounds(req, res) {
+    async getRounds(req, res, next) {
         const { id, nation } = req.params;
         const info = await checkNation(nation);
         try {
@@ -127,60 +129,64 @@ class sportController {
                 data,
             });
         } catch (err) {
-            res.status(500).json({
-                mes: err.message,
-            });
+            console.log(err);
+            next(createError("500", "Internal server error at get Rounds"));
         }
     }
     ///rounds/hightlight
 
     // /match"
-    async getMatch(req, res) {
-        const { nation } = req.params;
-        const info = await checkNation(nation);
-        const rounds = await getRequest(
-            `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/rounds`
-        );
-        const link = (idRound) =>
-            `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/events/round/${idRound}`;
-        let resp, bf, cr, af;
-        if (
-            rounds.currentRound.round >= 2 &&
-            rounds.currentRound.round <= rounds.rounds.length - 1
-        ) {
-            resp = await Promise.all([
-                getRequest(link(rounds.currentRound.round - 1)),
-                getRequest(link(rounds.currentRound.round)),
-                getRequest(link(rounds.currentRound.round + 1)),
-            ]);
-            bf = await reduceMatch(resp[0].events);
-            cr = await reduceMatch(resp[1].events);
-            af = await reduceMatch(resp[2].events);
-        } else if (rounds.currentRound.round < 2) {
-            resp = await Promise.all([
-                getRequest(link(rounds.currentRound.round)),
-                getRequest(link(rounds.currentRound.round + 1)),
-            ]);
-            bf = null;
-            cr = await reduceMatch(resp[1].events);
-            af = await reduceMatch(resp[2].events);
-        } else if (rounds.currentRound.round > rounds.rounds.length - 1) {
-            resp = await Promise.all([
-                getRequest(link(rounds.currentRound.round - 1)),
-                getRequest(link(rounds.currentRound.round)),
-            ]);
-            bf = await reduceMatch(resp[0].events);
-            cr = await reduceMatch(resp[1].events);
-            af = null;
+    async getMatch(req, res, next) {
+        try {
+            const { nation } = req.params;
+            const info = await checkNation(nation);
+            const rounds = await getRequest(
+                `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/rounds`
+            );
+            const link = (idRound) =>
+                `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/events/round/${idRound}`;
+            let resp, bf, cr, af;
+            if (
+                rounds.currentRound.round >= 2 &&
+                rounds.currentRound.round <= rounds.rounds.length - 1
+            ) {
+                resp = await Promise.all([
+                    getRequest(link(rounds.currentRound.round - 1)),
+                    getRequest(link(rounds.currentRound.round)),
+                    getRequest(link(rounds.currentRound.round + 1)),
+                ]);
+                bf = await reduceMatch(resp[0].events);
+                cr = await reduceMatch(resp[1].events);
+                af = await reduceMatch(resp[2].events);
+            } else if (rounds.currentRound.round < 2) {
+                resp = await Promise.all([
+                    getRequest(link(rounds.currentRound.round)),
+                    getRequest(link(rounds.currentRound.round + 1)),
+                ]);
+                bf = null;
+                cr = await reduceMatch(resp[1].events);
+                af = await reduceMatch(resp[2].events);
+            } else if (rounds.currentRound.round > rounds.rounds.length - 1) {
+                resp = await Promise.all([
+                    getRequest(link(rounds.currentRound.round - 1)),
+                    getRequest(link(rounds.currentRound.round)),
+                ]);
+                bf = await reduceMatch(resp[0].events);
+                cr = await reduceMatch(resp[1].events);
+                af = null;
+            }
+            res.status(200).json({
+                mes: "success",
+                rounds,
+                data: [bf, cr, af],
+            });
+        } catch (err) {
+            console.log(err);
+            next(createError("500", "Internal server error at getMatch"));
         }
-        res.status(200).json({
-            mes: "success",
-            rounds,
-            data: [bf, cr, af],
-        });
     }
     // /top-players",
-    async getTopPlayers(req, res) {
+    async getTopPlayers(req, res, next) {
         const { nation } = req.params;
         const info = await checkNation(nation);
         axios
@@ -194,9 +200,14 @@ class sportController {
                     data,
                 });
             })
-            .catch((err) => console.log);
+            .catch((err) => {
+                console.log(err);
+                next(
+                    createError("500", "Internal server error at getTopPlayers")
+                );
+            });
     }
-    async getPlaylistVideo(req, res) {
+    async getPlaylistVideo(req, res, next) {
         axios({
             method: "GET",
             url: "https://www.googleapis.com/youtube/v3/playlistItems",
@@ -235,6 +246,7 @@ class sportController {
             })
             .catch((error) => {
                 console.log(error);
+                next(createError("500", "Internal server error at Playlist"));
             });
     }
 }

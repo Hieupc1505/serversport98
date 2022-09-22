@@ -4,6 +4,7 @@ const express = require("express");
 const routerCustom = require("./src/routers/index");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const createError = require("http-errors");
 
 const app = express();
 
@@ -21,6 +22,21 @@ if (process.env.NODE_ENV === "production") {
         });
     });
 }
+
+app.use((req, res, next) => {
+    console.log(req.url);
+    next(createError.NotFound("Page is not found"));
+});
+
+app.use((err, req, res, next) => {
+    console.log(err.message);
+    res.status(err.status || 500)
+        .json({
+            sucess: false,
+            msg: err.message || "Internal Server errorrs",
+        })
+        .end();
+});
 
 const port = process.env.PORT || 7500;
 app.listen(port, () => {
