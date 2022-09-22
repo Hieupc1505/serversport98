@@ -92,19 +92,8 @@ class sportController {
                 .then((resp) => resp.data);
 
             const data = resp.standings.map((item) => item.rows);
-            // let fiveM = fiveMatch.reduce((old, val) => {
-            //     return { ...old, ...val };
-            // }, {});
-            // .then((data) => {
-            //     res.status(200).json({
-            //         mes: "success",
-            //         data: data.standings[0].rows,
-            //         fiveMatch,
-            //         season: info.season.year,
-            //     });
-            // });
-            // res.json({ fiveMatch });
-            res.status(200).json({
+
+            return res.status(200).json({
                 mes: "success",
                 data,
                 fiveMatch,
@@ -112,7 +101,9 @@ class sportController {
             });
         } catch (err) {
             console.log(err);
-            next(createError("500", "Internal server error at getCharts"));
+            return next(
+                createError("500", "Internal server error at getCharts")
+            );
         }
     }
     // /rounds/:id
@@ -124,13 +115,15 @@ class sportController {
                 `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/events/round/${id}`
             );
             data = await reduceMatch(data.events);
-            res.status(200).json({
+            return res.status(200).json({
                 mes: "success",
                 data,
             });
         } catch (err) {
             console.log(err);
-            next(createError("500", "Internal server error at get Rounds"));
+            return next(
+                createError("500", "Internal server error at get Rounds")
+            );
         }
     }
     ///rounds/hightlight
@@ -175,14 +168,16 @@ class sportController {
                 cr = await reduceMatch(resp[1].events);
                 af = null;
             }
-            res.status(200).json({
+            return res.status(200).json({
                 mes: "success",
                 rounds,
                 data: [bf, cr, af],
             });
         } catch (err) {
             console.log(err);
-            next(createError("500", "Internal server error at getMatch"));
+            return next(
+                createError("500", "Internal server error at getMatch")
+            );
         }
     }
     // /top-players",
@@ -195,14 +190,14 @@ class sportController {
             )
             .then((resp) => resp.data)
             .then((data) => {
-                res.status(200).json({
+                return res.status(200).json({
                     mes: "success",
                     data,
                 });
             })
             .catch((err) => {
                 console.log(err);
-                next(
+                return next(
                     createError("500", "Internal server error at getTopPlayers")
                 );
             });
@@ -246,7 +241,9 @@ class sportController {
             })
             .catch((error) => {
                 console.log(error);
-                next(createError("500", "Internal server error at Playlist"));
+                return next(
+                    createError("500", "Internal server error at Playlist")
+                );
             });
     }
 }

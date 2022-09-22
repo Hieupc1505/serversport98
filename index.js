@@ -15,13 +15,13 @@ app.use(bodyParser.json());
 
 routerCustom(app);
 
-if (process.env.NODE_ENV === "production") {
-    app.get("*", (req, res) => {
-        res.status(500).json({
-            message: "get fail oki",
-        });
-    });
-}
+// if (process.env.NODE_ENV === "production") {
+//     app.get("*", (req, res) => {
+//         res.status(500).json({
+//             message: "get fail oki",
+//         });
+//     });
+// }
 
 app.use((req, res, next) => {
     console.log(req.url);
@@ -33,7 +33,7 @@ app.use((err, req, res, next) => {
     res.status(err.status || 500)
         .json({
             sucess: false,
-            msg: err.message || "Internal Server errorrs",
+            err: err.message || "Internal Server errorrs",
         })
         .end();
 });
