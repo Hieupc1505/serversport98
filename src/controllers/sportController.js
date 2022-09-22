@@ -173,14 +173,6 @@ class sportController {
             cr = await reduceMatch(resp[1].events);
             af = null;
         }
-
-        // let data =
-        //     rounds.currentRound.round &&
-        //     (await getRequest(
-        //         `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/events/round/${rounds.currentRound.round}`
-        //     ));
-
-        // data = await reduceMatch(data.events);
         res.status(200).json({
             mes: "success",
             rounds,
