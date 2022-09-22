@@ -46,7 +46,7 @@ async function getLastFiveMatch(link) {
     return resp;
 }
 const getRequest = async (url) => {
-    return axios.get(url).then((resp) => resp.data);
+    return await axios.get(url).then((resp) => resp.data);
 };
 const reduceMatch = async (arr) => {
     return arr.reduce((pre, curr) => {

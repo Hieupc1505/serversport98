@@ -8,10 +8,8 @@
         "npm": "8.x"
     },
     "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
         "start": "node index",
-        "dev": "nodemon index",
-        "build": "NODE_ENV=production ./node_modules/.bin/netlify-lambda serve src"
+        "dev": "nodemon index"
     },
     "keywords": [],
     "author": "",
