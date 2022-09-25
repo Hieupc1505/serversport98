@@ -1,6 +1,8 @@
 const nations = require("../Library/nation.json");
 const { default: axios } = require("axios");
 const createError = require("http-errors");
+const rp = require("request-promise");
+const cheerio = require("cheerio");
 
 async function getLastFiveMatch(link) {
     const { data } = await axios.get(link);
@@ -100,7 +102,6 @@ class sportController {
                 season: info.season.year,
             });
         } catch (err) {
-            console.log(err);
             return next(
                 createError("500", "Internal server error at getCharts")
             );
@@ -174,7 +175,6 @@ class sportController {
                 data: [bf, cr, af],
             });
         } catch (err) {
-            console.log(err);
             return next(
                 createError("500", "Internal server error at getMatch")
             );
@@ -196,7 +196,6 @@ class sportController {
                 });
             })
             .catch((err) => {
-                console.log(err);
                 return next(
                     createError("500", "Internal server error at getTopPlayers")
                 );
@@ -223,7 +222,6 @@ class sportController {
                         .match(/[\d-:]*/gi)
                         .filter((item) => !!item)
                         .join(" ");
-                    // console.log(time);
                     return {
                         snippet: {
                             publishedAt: time,
@@ -233,14 +231,12 @@ class sportController {
                         },
                     };
                 });
-                // console.log(data);
                 return res.status(200).json({
                     message: "success",
                     data,
                 });
             })
             .catch((error) => {
-                console.log(error);
                 return next(
                     createError("500", "Internal server error at Playlist")
                 );
@@ -252,30 +248,23 @@ class sportController {
                 return {
                     uri: url,
                     transform: function (body) {
-                        // console.log(body);
                         return cheerio.load(body);
                     },
                 };
             };
             const arrLink = await rp(options("https://bit.ly/tiengruoi"))
                 .then(async function ($) {
-                    // Process html like you would with jQuery...
-                    // console.log($);
                     const link = $("a.cl_i-content");
                     let arr = await Object.values(link)
                         .map((item) => {
-                            // console.log(Object.keys(item));
-
                             if (item.attribs) return item.attribs.href;
                         })
                         .filter((item) => /vebotv/gi.test(item));
                     return arr;
                 })
                 .catch(function (err) {
-                    // Crawling failed or Cheerio choked...
                     console.log(err);
                 });
-            const lib = await getLive();
             rp(options(arrLink[0]))
                 .then(function ($) {
                     let arr = [];
@@ -326,35 +315,73 @@ class sportController {
                                     )
                                 ).join(""),
                             };
-
-                            if (item.attr("class").includes("item-live")) {
-                                arr[i].status = {
-                                    live: true,
-                                    homeScore: item
-                                        .find(".item-info .result .home-score")
-                                        .text(),
-                                    awayScore: item
-                                        .find(".item-info .result .away-score")
-                                        .text(),
-                                    timeLoaded:
-                                        lib.search(homeName, awayName)[0] ||
-                                        null,
-                                };
-                            } else {
-                                arr[i].status = {
-                                    live: false,
-                                    day: item
+                            let liveStatus = (function () {
+                                let day =
+                                    item
                                         .find(
                                             ".item-info.block-info-pending .time"
                                         )
-                                        .text(),
-                                    time: item
+                                        .text() || null;
+                                let time =
+                                    item
                                         .find(
                                             ".item-info.block-info-pending .status"
                                         )
-                                        .text(),
-                                };
-                            }
+                                        .text() || null;
+                                // if (time && day) {
+                                //     let date =
+                                //         day.replace(
+                                //             /(\d+[/])(\d+[/])/,
+                                //             "$2$1"
+                                //         ) +
+                                //         " " +
+                                //         time;
+                                //     let tar =
+                                //         new Date(date).getTime() -
+                                //         new Date().getTime;
+                                //     if (tar > 0) return true;
+                                //     else return false;
+                                // }
+
+                                if (day) {
+                                    let tar =
+                                        day.replace(
+                                            /(\d+[/])(\d+[/])/,
+                                            "$2$1"
+                                        ) +
+                                        " " +
+                                        time;
+                                    return new Date(
+                                        tar.replaceAll("\n", "")
+                                    ).getTime() > new Date().getTime
+                                        ? true
+                                        : false;
+                                } else return true;
+                            })();
+
+                            arr[i].status = {
+                                live: liveStatus,
+                                homeScore: item
+                                    .find(".item-info .result .home-score")
+                                    .text(),
+                                awayScore: item
+                                    .find(".item-info .result .away-score")
+                                    .text(),
+                                timeLoaded:
+                                    item
+                                        .find(
+                                            ".item-info.block-info-pending .status"
+                                        )
+                                        .text()
+                                        .replaceAll("\n", "") || null,
+                                day:
+                                    item
+                                        .find(
+                                            ".item-info.block-info-pending .time"
+                                        )
+                                        .text()
+                                        .replaceAll("\n", "") || null,
+                            };
                         }
                     );
                     res.status(200).json({
@@ -363,7 +390,12 @@ class sportController {
                     });
                 })
                 .catch((err) => {
-                    console.log(err);
+                    next(
+                        createError(
+                            "500",
+                            "Internal server error at getLiveMatch"
+                        )
+                    );
                 });
         } catch (err) {
             next(createError("500", "Internal server error at getLiveMatch"));
@@ -380,87 +412,89 @@ class sportController {
                     `https://api.sofascore.com/api/v1/sport/football/events/live`
                 )
                 .then((resp) => resp.data);
-            console.log(data);
+
             let i = 0;
-            const resp = data.events.map(
-                ({
-                    tournament,
-                    status,
-                    homeTeam,
-                    awayTeam,
-                    homeScore,
-                    awayScore,
-                    changes,
-                    startTimestamp,
-                    slug,
-                }) => {
-                    if (
-                        !nationId.includes(item.tournament.uniqueTournament.id)
-                    ) {
-                        if (i <= 12) {
-                            i++;
-                            return {
-                                tournament: {
-                                    name: tournament.name,
-                                    slug: tournament.slug,
-                                    id: tournament.id,
-                                },
-                                status,
-                                homeTeam: {
-                                    name: homeTeam.name,
-                                    slug: homeTeam.slug,
-                                    shortName: homeTeam.shortName,
-                                    id: homeTeam.shortName,
-                                    score: homeScore.current,
-                                },
-                                awayTeam: {
-                                    name: awayTeam.name,
-                                    slug: awayTeam.slug,
-                                    shortName: awayTeam.shortName,
-                                    id: awayTeam.shortName,
-                                    score: awayScore.current,
-                                },
-                                timeStatus: {
-                                    start: startTimestamp,
-                                    changes: changes.changeTimestamp,
-                                },
-                                slug,
-                            };
+            const resp = data.events
+                .map(
+                    ({
+                        tournament,
+                        status,
+                        homeTeam,
+                        awayTeam,
+                        homeScore,
+                        awayScore,
+                        changes,
+                        startTimestamp,
+                        slug,
+                    }) => {
+                        if (tournament.uniqueTournament) {
+                            let { id } = tournament.uniqueTournament;
+                            if (!nationId.includes(id) && i <= 13) {
+                                i++;
+                                return {
+                                    tournament: {
+                                        name: tournament.name,
+                                        slug: tournament.slug,
+                                        id,
+                                    },
+                                    status,
+                                    homeTeam: {
+                                        name: homeTeam.name,
+                                        slug: homeTeam.slug,
+                                        shortName: homeTeam.shortName,
+                                        id: homeTeam.id,
+                                        score: homeScore.current,
+                                    },
+                                    awayTeam: {
+                                        name: awayTeam.name,
+                                        slug: awayTeam.slug,
+                                        shortName: awayTeam.shortName,
+                                        id: awayTeam.id,
+                                        score: awayScore.current,
+                                    },
+                                    timeStatus: {
+                                        start: startTimestamp,
+                                        changes: changes.changeTimestamp,
+                                    },
+                                    slug,
+                                };
+                            }
+                            if (nationId.includes(id))
+                                return {
+                                    tournament: {
+                                        name: tournament.name,
+                                        slug: tournament.slug,
+                                        id,
+                                    },
+                                    status,
+                                    homeTeam: {
+                                        name: homeTeam.name,
+                                        slug: homeTeam.slug,
+                                        shortName: homeTeam.shortName,
+                                        id: homeTeam.id,
+                                        score: homeScore.current,
+                                    },
+                                    awayTeam: {
+                                        name: awayTeam.name,
+                                        slug: awayTeam.slug,
+                                        shortName: awayTeam.shortName,
+                                        id: awayTeam.id,
+                                        score: awayScore.current,
+                                    },
+                                    timeStatus: {
+                                        start: startTimestamp,
+                                        changes: changes.changeTimestamp,
+                                    },
+                                    slug,
+                                };
                         }
                     }
-
-                    return {
-                        tournament: {
-                            name: tournament.name,
-                            slug: tournament.slug,
-                            id: tournament.id,
-                        },
-                        status,
-                        homeTeam: {
-                            name: homeTeam.name,
-                            slug: homeTeam.slug,
-                            shortName: homeTeam.shortName,
-                            id: homeTeam.shortName,
-                            score: homeScore.current,
-                        },
-                        awayTeam: {
-                            name: awayTeam.name,
-                            slug: awayTeam.slug,
-                            shortName: awayTeam.shortName,
-                            id: awayTeam.shortName,
-                            score: awayScore.current,
-                        },
-                        timeStatus: {
-                            start: startTimestamp,
-                            changes: changes.changeTimestamp,
-                        },
-                        slug,
-                    };
-                }
-            );
+                )
+                .filter((item) => item);
+            // console.log(resp);
             return res.status(200).json({
                 mes: "success",
-                data: resp,
+                live: resp,
             });
         } catch (err) {
             console.log(err);
