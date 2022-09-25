@@ -246,6 +246,229 @@ class sportController {
                 );
             });
     }
+    async getLiveMatch(req, res, next) {
+        try {
+            let options = (url) => {
+                return {
+                    uri: url,
+                    transform: function (body) {
+                        // console.log(body);
+                        return cheerio.load(body);
+                    },
+                };
+            };
+            const arrLink = await rp(options("https://bit.ly/tiengruoi"))
+                .then(async function ($) {
+                    // Process html like you would with jQuery...
+                    // console.log($);
+                    const link = $("a.cl_i-content");
+                    let arr = await Object.values(link)
+                        .map((item) => {
+                            // console.log(Object.keys(item));
+
+                            if (item.attribs) return item.attribs.href;
+                        })
+                        .filter((item) => /vebotv/gi.test(item));
+                    return arr;
+                })
+                .catch(function (err) {
+                    // Crawling failed or Cheerio choked...
+                    console.log(err);
+                });
+            const lib = await getLive();
+            rp(options(arrLink[0]))
+                .then(function ($) {
+                    let arr = [];
+                    let origin = $('link[rel="canonical"]').attr("href");
+                    $(".match_list.match_list-grid .item.item-hot").each(
+                        (i, el) => {
+                            const item = $(el);
+                            let homeName = item
+                                    .find(".team-home .team-name")
+                                    .text(),
+                                awayName = item
+                                    .find(".team-away .team-name")
+                                    .text();
+                            arr[i] = {
+                                link:
+                                    origin.slice(0, origin.lastIndexOf("/")) +
+                                    item.find("a").attr("href"),
+                                league: {
+                                    name: item.find("div.item-league").text(),
+                                    img: item
+                                        .find(".league-icon img")
+                                        .attr("src"),
+                                },
+                                home: {
+                                    name: homeName,
+                                    logo: item
+                                        .find(".team-home .team-logo img")
+                                        .attr("src"),
+                                    // score: item
+                                    //     .find(".item-info .result .home-score")
+                                    //     .text(),
+                                },
+                                away: {
+                                    name: awayName,
+                                    logo: item
+                                        .find(".team-away .team-logo img")
+                                        .attr("src"),
+                                    // score: item
+                                    //     .find(".item-info .result .away-score")
+                                    //     .text(),
+                                },
+                                commentator: Array.from(
+                                    new Set(
+                                        item
+                                            .find(".commentator")
+                                            .text()
+                                            .split("\n")
+                                    )
+                                ).join(""),
+                            };
+
+                            if (item.attr("class").includes("item-live")) {
+                                arr[i].status = {
+                                    live: true,
+                                    homeScore: item
+                                        .find(".item-info .result .home-score")
+                                        .text(),
+                                    awayScore: item
+                                        .find(".item-info .result .away-score")
+                                        .text(),
+                                    timeLoaded:
+                                        lib.search(homeName, awayName)[0] ||
+                                        null,
+                                };
+                            } else {
+                                arr[i].status = {
+                                    live: false,
+                                    day: item
+                                        .find(
+                                            ".item-info.block-info-pending .time"
+                                        )
+                                        .text(),
+                                    time: item
+                                        .find(
+                                            ".item-info.block-info-pending .status"
+                                        )
+                                        .text(),
+                                };
+                            }
+                        }
+                    );
+                    res.status(200).json({
+                        message: "success",
+                        live: arr,
+                    });
+                })
+                .catch((err) => {
+                    console.log(err);
+                });
+        } catch (err) {
+            next(createError("500", "Internal server error at getLiveMatch"));
+        }
+    }
+    async getLiveSofa(req, res, next) {
+        try {
+            // const { id, nation } = req.params;
+            const nationId = Object.values(nations).map(({ params }) =>
+                Number.parseInt(params.id)
+            );
+            const data = await axios
+                .get(
+                    `https://api.sofascore.com/api/v1/sport/football/events/live`
+                )
+                .then((resp) => resp.data);
+            console.log(data);
+            let i = 0;
+            const resp = data.events.map(
+                ({
+                    tournament,
+                    status,
+                    homeTeam,
+                    awayTeam,
+                    homeScore,
+                    awayScore,
+                    changes,
+                    startTimestamp,
+                    slug,
+                }) => {
+                    if (
+                        !nationId.includes(item.tournament.uniqueTournament.id)
+                    ) {
+                        if (i <= 12) {
+                            i++;
+                            return {
+                                tournament: {
+                                    name: tournament.name,
+                                    slug: tournament.slug,
+                                    id: tournament.id,
+                                },
+                                status,
+                                homeTeam: {
+                                    name: homeTeam.name,
+                                    slug: homeTeam.slug,
+                                    shortName: homeTeam.shortName,
+                                    id: homeTeam.shortName,
+                                    score: homeScore.current,
+                                },
+                                awayTeam: {
+                                    name: awayTeam.name,
+                                    slug: awayTeam.slug,
+                                    shortName: awayTeam.shortName,
+                                    id: awayTeam.shortName,
+                                    score: awayScore.current,
+                                },
+                                timeStatus: {
+                                    start: startTimestamp,
+                                    changes: changes.changeTimestamp,
+                                },
+                                slug,
+                            };
+                        }
+                    }
+
+                    return {
+                        tournament: {
+                            name: tournament.name,
+                            slug: tournament.slug,
+                            id: tournament.id,
+                        },
+                        status,
+                        homeTeam: {
+                            name: homeTeam.name,
+                            slug: homeTeam.slug,
+                            shortName: homeTeam.shortName,
+                            id: homeTeam.shortName,
+                            score: homeScore.current,
+                        },
+                        awayTeam: {
+                            name: awayTeam.name,
+                            slug: awayTeam.slug,
+                            shortName: awayTeam.shortName,
+                            id: awayTeam.shortName,
+                            score: awayScore.current,
+                        },
+                        timeStatus: {
+                            start: startTimestamp,
+                            changes: changes.changeTimestamp,
+                        },
+                        slug,
+                    };
+                }
+            );
+            return res.status(200).json({
+                mes: "success",
+                data: resp,
+            });
+        } catch (err) {
+            console.log(err);
+            return next(
+                createError("500", "Internal server error at getCharts")
+            );
+        }
+    }
 }
 
 module.exports = new sportController();
