@@ -500,7 +500,7 @@ class sportController {
         } catch (err) {
             console.log(err);
             return next(
-                createError("500", "Internal server error at getCharts")
+                createError("500", "Internal server error at getLiveSofa")
             );
         }
     }
