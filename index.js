@@ -5,11 +5,12 @@ const routerCustom = require("./src/routers/index");
 const cors = require("cors");
 const bodyParser = require("body-parser");
 const createError = require("http-errors");
+const db = require("./src/config/db");
 
 const app = express();
+db.connect();
 
 app.use(cors());
-// app.use(express.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
 
@@ -38,5 +39,5 @@ app.use((err, req, res, next) => {
 
 const port = process.env.PORT || 7500;
 app.listen(port, () => {
-    console.log("App is running at : ", port);
+    console.log("Running : " + `http://localhost:${port}`);
 });

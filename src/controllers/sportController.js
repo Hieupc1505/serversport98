@@ -3,9 +3,11 @@ const { default: axios } = require("axios");
 const createError = require("http-errors");
 const rp = require("request-promise");
 const cheerio = require("cheerio");
+const _ = require("lodash");
+const englandsModel = require("../models/englandModel");
 
-async function getLastFiveMatch(link) {
-    const { data } = await axios.get(link);
+async function getLastFiveMatch(data) {
+    // const { data } = await axios.get(link);
     const tag = Object.keys(data.tournamentTeamEvents); //layas doi truong
     let resp = {};
     const list = data.tournamentTeamEvents;
@@ -47,26 +49,14 @@ async function getLastFiveMatch(link) {
 
     return resp;
 }
+
 const getRequest = async (url) => {
     return await axios.get(url).then((resp) => resp.data);
-};
-const reduceMatch = async (arr) => {
-    return arr.reduce((pre, curr) => {
-        let l = pre.length;
-        if (l == 0 || pre[l - 1].length == 2) {
-            return [...pre, [curr]];
-        } else {
-            let tc = pre.pop();
-
-            return [...pre, [...tc, curr]];
-        }
-    }, []);
 };
 
 const checkNation = async (nation, s = 0) => {
     // const idNation , idSeason
     const { params, seasons } = nations[nation];
-
     return {
         idNation: params.id,
         season: { year: seasons[s].year, id: seasons[s].id },
@@ -76,32 +66,39 @@ const checkNation = async (nation, s = 0) => {
 class sportController {
     // /charts/:id
     async getCharts(req, res, next) {
+        const time = new Date();
+
         //bang xep hang
         try {
             const { id, nation } = req.params;
-
             const info = await checkNation(nation, id);
 
-            const fiveMatch = await getLastFiveMatch(
-                `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/team-events/total`
-            );
-
-            const resp = await axios
-                .get(
+            const resp = await Promise.all([
+                getRequest(
+                    `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/team-events/total`
+                ),
+                getRequest(
                     `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/standings/total`
-                )
+                ),
+            ]);
+            // const charts = await englandsModel.find(
+            //     {
+            //         "tournament.nation": nation,
+            //     },
+            //     { rows: 1 }
+            // );
 
-                .then((resp) => resp.data);
-
-            const data = resp.standings.map((item) => item.rows);
-
+            const data = resp[1].standings.map((item) => item.rows)[0];
+            const fiveMatch = await getLastFiveMatch(resp[0]);
             return res.status(200).json({
                 mes: "success",
                 data,
                 fiveMatch,
                 season: info.season.year,
+                timmer: new Date() - time + "ms",
             });
         } catch (err) {
+            console.log(err);
             return next(
                 createError("500", "Internal server error at getCharts")
             );
@@ -109,16 +106,19 @@ class sportController {
     }
     // /rounds/:id
     async getRounds(req, res, next) {
+        const time = new Date();
         const { id, nation } = req.params;
         const info = await checkNation(nation);
         try {
             let data = await getRequest(
                 `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/events/round/${id}`
             );
-            data = await reduceMatch(data.events);
+            // data = await reduceMatch(data.events);
+            data = await _.chunk(data.events, 2);
             return res.status(200).json({
                 mes: "success",
                 data,
+                timmer: new Date() - time + "ms",
             });
         } catch (err) {
             console.log(err);
@@ -131,6 +131,7 @@ class sportController {
 
     // /match"
     async getMatch(req, res, next) {
+        const time = new Date();
         try {
             const { nation } = req.params;
             const info = await checkNation(nation);
@@ -140,41 +141,34 @@ class sportController {
             const link = (idRound) =>
                 `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/events/round/${idRound}`;
             let resp, bf, cr, af;
-            if (
-                rounds.currentRound.round >= 2 &&
-                rounds.currentRound.round <= rounds.rounds.length - 1
-            ) {
-                resp = await Promise.all([
-                    getRequest(link(rounds.currentRound.round - 1)),
-                    getRequest(link(rounds.currentRound.round)),
-                    getRequest(link(rounds.currentRound.round + 1)),
-                ]);
-                bf = await reduceMatch(resp[0].events);
-                cr = await reduceMatch(resp[1].events);
-                af = await reduceMatch(resp[2].events);
-            } else if (rounds.currentRound.round < 2) {
-                resp = await Promise.all([
-                    getRequest(link(rounds.currentRound.round)),
-                    getRequest(link(rounds.currentRound.round + 1)),
-                ]);
-                bf = null;
-                cr = await reduceMatch(resp[1].events);
-                af = await reduceMatch(resp[2].events);
-            } else if (rounds.currentRound.round > rounds.rounds.length - 1) {
-                resp = await Promise.all([
-                    getRequest(link(rounds.currentRound.round - 1)),
-                    getRequest(link(rounds.currentRound.round)),
-                ]);
-                bf = await reduceMatch(resp[0].events);
-                cr = await reduceMatch(resp[1].events);
-                af = null;
-            }
+
+            // let rounds = { currentRound: { round: 1 } };
+            resp = await Promise.allSettled([
+                getRequest(link(rounds.currentRound.round - 1)),
+                getRequest(link(rounds.currentRound.round)),
+                getRequest(link(rounds.currentRound.round + 1)),
+            ]);
+
+            bf =
+                resp[0].status === "rejected" || !!resp[0].reason
+                    ? null
+                    : _.chunk(resp[0].value.events, 2);
+            cr = _.chunk(resp[1].value.events, 2);
+            af =
+                resp[2].status === "rejected" || !!resp[2].reason
+                    ? null
+                    : _.chunk(resp[2].value.events, 2);
+
+            // console.log(resp);
+
             return res.status(200).json({
                 mes: "success",
                 rounds,
                 data: [bf, cr, af],
+                timmer: new Date() - time + "ms",
             });
         } catch (err) {
+            console.log(err);
             return next(
                 createError("500", "Internal server error at getMatch")
             );
@@ -203,6 +197,7 @@ class sportController {
             });
     }
     async getPlaylistVideo(req, res, next) {
+        const time = new Date();
         axios({
             method: "GET",
             url: "https://www.googleapis.com/youtube/v3/playlistItems",
@@ -235,6 +230,7 @@ class sportController {
                 return res.status(200).json({
                     message: "success",
                     data,
+                    timmer: new Date() - time + "ms",
                 });
             })
             .catch((error) => {
@@ -243,7 +239,9 @@ class sportController {
                 );
             });
     }
+
     async getLiveMatch(req, res, next) {
+        const time = new Date();
         try {
             let options = (url) => {
                 return {
@@ -329,20 +327,6 @@ class sportController {
                                             ".item-info.block-info-pending .status"
                                         )
                                         .text() || null;
-                                // if (time && day) {
-                                //     let date =
-                                //         day.replace(
-                                //             /(\d+[/])(\d+[/])/,
-                                //             "$2$1"
-                                //         ) +
-                                //         " " +
-                                //         time;
-                                //     let tar =
-                                //         new Date(date).getTime() -
-                                //         new Date().getTime;
-                                //     if (tar > 0) return true;
-                                //     else return false;
-                                // }
 
                                 if (day) {
                                     let tar =
@@ -388,6 +372,7 @@ class sportController {
                     res.status(200).json({
                         message: "success",
                         live: arr,
+                        timmer: new Date() - time,
                     });
                 })
                 .catch((err) => {
@@ -498,7 +483,7 @@ class sportController {
                 live: resp,
             });
         } catch (err) {
-            console.log(err);
+            // console.log(err);
             return next(
                 createError("500", "Internal server error at getLiveSofa")
             );
