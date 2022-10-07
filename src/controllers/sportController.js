@@ -5,42 +5,44 @@ const rp = require("request-promise");
 const cheerio = require("cheerio");
 const _ = require("lodash");
 const englandsModel = require("../models/englandModel");
+const hightLight = require("../models/hightLight");
 
 async function getLastFiveMatch(data) {
     // const { data } = await axios.get(link);
-    const tag = Object.keys(data.tournamentTeamEvents); //layas doi truong
+    const tag = Object.keys(data); //layas id giai doi truong
+    // const list = data; //lay id cua doi
     let resp = {};
-    const list = data.tournamentTeamEvents;
+
     tag.forEach((obj) => {
+        //lap tung keys teamEvents
         let state = {};
-        let lib = list[obj];
+
+        let lib = data[obj]; // value cuar 1462
 
         for (let item in lib) {
+            //tung key of object trong 1462
             let mc = lib[item];
             let num = item;
             let mct = [];
             // console.log(mc);
-            for (let item of mc) {
+            for (let team of mc) {
                 let ob = {};
-                const winTeam = item.winnerCode;
-                if (item.winnerCode === 1) {
-                    if (item.homeTeam.id === Number.parseInt(num)) ob.win = 1;
+                const winTeam = team.winnerCode;
+                if (team.winnerCode === 1) {
+                    if (team.homeTeam.id === Number.parseInt(num)) ob.win = 1;
                     else ob.win = -1;
-                } else if (item.winnerCode === 2) {
-                    if (item.awayTeam.id === Number.parseInt(num)) ob.win = 1;
+                } else if (team.winnerCode === 2) {
+                    if (team.awayTeam.id === Number.parseInt(num)) ob.win = 1;
                     else ob.win = -1;
                 } else ob.win = 0;
-                ob.match = `${item.homeTeam.shortName} - ${item.awayTeam.shortName}`;
-                ob.score = `${item.homeScore.current} - ${item.awayScore.current}`;
+                ob.match = `${team.homeTeam.shortName} - ${team.awayTeam.shortName}`;
+                ob.score = `${team.homeScore.current} - ${team.awayScore.current}`;
                 ob.time = new Date(
-                    item.startTimestamp * 1000
+                    team.startTimestamp * 1000
                 ).toLocaleDateString();
-                ob.customId = item.customId;
-                ob.slug = item.slug;
-                // ob.length = item.length;
+                ob.customId = team.customId;
+                ob.slug = team.slug;
                 mct.push(ob);
-
-                // console.log(typeof item.homeTeam.id + "///" + typeof num);
             }
             state[`${num}`] = mct;
         }
@@ -49,9 +51,10 @@ async function getLastFiveMatch(data) {
 
     return resp;
 }
+const getString = (tt) => {
+    let tar = tt.split(" - ");
 
-const getRequest = async (url) => {
-    return await axios.get(url).then((resp) => resp.data);
+    return `\"${tar[0]}\" ${tar[1]}\"`;
 };
 
 const checkNation = async (nation, s = 0) => {
@@ -68,31 +71,16 @@ class sportController {
     async getCharts(req, res, next) {
         const time = new Date();
 
-        //bang xep hang
         try {
+            const { charts, teamEvents } = req;
             const { id, nation } = req.params;
+
             const info = await checkNation(nation, id);
+            const fiveMatch = await getLastFiveMatch(teamEvents);
 
-            const resp = await Promise.all([
-                getRequest(
-                    `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/team-events/total`
-                ),
-                getRequest(
-                    `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/standings/total`
-                ),
-            ]);
-            // const charts = await englandsModel.find(
-            //     {
-            //         "tournament.nation": nation,
-            //     },
-            //     { rows: 1 }
-            // );
-
-            const data = resp[1].standings.map((item) => item.rows)[0];
-            const fiveMatch = await getLastFiveMatch(resp[0]);
             return res.status(200).json({
                 mes: "success",
-                data,
+                data: charts,
                 fiveMatch,
                 season: info.season.year,
                 timmer: new Date() - time + "ms",
@@ -108,13 +96,18 @@ class sportController {
     async getRounds(req, res, next) {
         const time = new Date();
         const { id, nation } = req.params;
-        const info = await checkNation(nation);
         try {
-            let data = await getRequest(
-                `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/events/round/${id}`
-            );
-            // data = await reduceMatch(data.events);
-            data = await _.chunk(data.events, 2);
+            const [query] = await englandsModel.aggregate([
+                { $match: { "tournament.nation": nation } },
+                {
+                    $project: {
+                        match: {
+                            $arrayElemAt: ["$matches", Number.parseInt(id) - 1],
+                        },
+                    },
+                },
+            ]);
+            let data = await _.chunk(query.match.events, 2);
             return res.status(200).json({
                 mes: "success",
                 data,
@@ -127,43 +120,61 @@ class sportController {
             );
         }
     }
-    ///rounds/hightlight
 
-    // /match"
     async getMatch(req, res, next) {
         const time = new Date();
         try {
+            const { currentRound, rounds } = req.rounds;
             const { nation } = req.params;
-            const info = await checkNation(nation);
-            const rounds = await getRequest(
-                `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/rounds`
-            );
-            const link = (idRound) =>
-                `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/events/round/${idRound}`;
-            let resp, bf, cr, af;
 
-            // let rounds = { currentRound: { round: 1 } };
-            resp = await Promise.allSettled([
-                getRequest(link(rounds.currentRound.round - 1)),
-                getRequest(link(rounds.currentRound.round)),
-                getRequest(link(rounds.currentRound.round + 1)),
+            const [query] = await englandsModel.aggregate([
+                { $match: { "tournament.nation": nation } },
+                {
+                    $project: {
+                        before: {
+                            $cond: {
+                                if: {
+                                    $eq: [currentRound.round - 2, -1],
+                                },
+                                then: null,
+                                else: {
+                                    $arrayElemAt: [
+                                        "$matches",
+                                        currentRound.round - 2,
+                                    ],
+                                },
+                            },
+                        },
+                        current: {
+                            $arrayElemAt: ["$matches", currentRound.round - 1],
+                        },
+                        after: {
+                            $cond: {
+                                if: {
+                                    $eq: [currentRound.round, rounds.length],
+                                },
+                                then: null,
+                                else: {
+                                    $arrayElemAt: [
+                                        "$matches",
+                                        currentRound.round,
+                                    ],
+                                },
+                            },
+                        },
+                    },
+                },
             ]);
+            let bf =
+                query.before === null ? null : _.chunk(query.before.events, 2);
 
-            bf =
-                resp[0].status === "rejected" || !!resp[0].reason
-                    ? null
-                    : _.chunk(resp[0].value.events, 2);
-            cr = _.chunk(resp[1].value.events, 2);
-            af =
-                resp[2].status === "rejected" || !!resp[2].reason
-                    ? null
-                    : _.chunk(resp[2].value.events, 2);
-
-            // console.log(resp);
+            let cr = _.chunk(query.current.events, 2);
+            let af =
+                query.after === null ? null : _.chunk(query.after.events, 2);
 
             return res.status(200).json({
                 mes: "success",
-                rounds,
+                rounds: { currentRound, rounds },
                 data: [bf, cr, af],
                 timmer: new Date() - time + "ms",
             });
@@ -177,67 +188,40 @@ class sportController {
     // /top-players",
     async getTopPlayers(req, res, next) {
         const { nation } = req.params;
-        const info = await checkNation(nation);
-        axios
-            .get(
-                `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/top-players/overall`
-            )
-            .then((resp) => resp.data)
-            .then((data) => {
-                return res.status(200).json({
-                    mes: "success",
-                    data,
-                });
-            })
-            .catch((err) => {
-                // console.log(err);
-                return next(
-                    createError("500", "Internal server error at getTopPlayers")
-                );
+
+        try {
+            const { topPlayers } = req;
+
+            res.status(200).json({
+                data: topPlayers,
             });
+        } catch (err) {
+            return next(
+                createError("500", "Internal server error at getMatch")
+            );
+        }
     }
     async getPlaylistVideo(req, res, next) {
-        const time = new Date();
-        axios({
-            method: "GET",
-            url: "https://www.googleapis.com/youtube/v3/playlistItems",
-            params: {
-                part: "snippet",
-                maxResults: "20",
-                key: "AIzaSyBle17ccjzisxuWTdnsX0sl0eLBWJMxFxI",
-                playlistId: nations[req.params.nation].params.list,
-            },
-        })
-            .then((resp) => {
-                // return res.data.items;
-                const { items } = resp.data;
-
-                const data = items.map((item) => {
-                    const { snippet } = item;
-                    const time = snippet.publishedAt
-                        .match(/[\d-:]*/gi)
-                        .filter((item) => !!item)
-                        .join(" ");
-                    return {
-                        snippet: {
-                            publishedAt: time,
-                            title: item.snippet.title,
-                            videoId: item.snippet.resourceId.videoId,
-                            playListId: item.snippet.playListId,
-                        },
-                    };
-                });
-                return res.status(200).json({
-                    message: "success",
-                    data,
-                    timmer: new Date() - time + "ms",
-                });
-            })
-            .catch((error) => {
-                return next(
-                    createError("500", "Internal server error at Playlist")
-                );
+        try {
+            const { nation } = req.params;
+            const data = await hightLight
+                .find({
+                    nation: nation,
+                })
+                .sort({ createdAt: -1 })
+                .limit(30)
+                .select("-_id");
+            res.status(200).json({
+                message: "err",
+                data,
             });
+        } catch (err) {
+            console.log(err);
+            res.status(200).json({
+                message: "err",
+                data: [],
+            });
+        }
     }
 
     async getLiveMatch(req, res, next) {
@@ -487,6 +471,41 @@ class sportController {
             return next(
                 createError("500", "Internal server error at getLiveSofa")
             );
+        }
+    }
+    async getVideo(req, res, next) {
+        const { q, c, pub } = req.query;
+        const { nation } = req.params;
+        let time = new Date(new Date(pub) - 24 * 60 * 60 * 1000);
+
+        const str = getString(q);
+
+        const result = await hightLight.find({
+            nation: nation,
+            createdAt: { $gt: new Date(time) },
+            $text: { $search: str },
+        });
+        if (!!result.length) {
+            return res.status(200).json({
+                id: result[0].videoId,
+            });
+        } else {
+            const { data } = await axios({
+                method: "GET",
+                url: "https://www.googleapis.com/youtube/v3/search",
+                params: {
+                    part: "snippet",
+                    maxResults: "4",
+                    key: "AIzaSyBle17ccjzisxuWTdnsX0sl0eLBWJMxFxI",
+                    q,
+                    publishedAfter: time,
+                    regionCode: "VN",
+                },
+            });
+            const result = data.items.filter(
+                (item) => item.snippet.channelId === c
+            );
+            res.status(200).json({ id: result[0].id.videoId });
         }
     }
 }
