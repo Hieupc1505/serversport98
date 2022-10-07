@@ -153,86 +153,6 @@
             }
         ],
 
-        "info": {
-            "goals": 175,
-            "homeTeamWins": 30,
-            "awayTeamWins": 12,
-            "draws": 18,
-            "yellowCards": 231,
-            "redCards": 3,
-            "numberOfRounds": 38,
-            "newcomersUpperDivision": [],
-            "newcomersLowerDivision": [
-                {
-                    "name": "Nottingham Forest",
-                    "slug": "nottingham-forest",
-                    "shortName": "Forest",
-                    "gender": "M",
-                    "sport": {
-                        "name": "Football",
-                        "slug": "football",
-                        "id": 1
-                    },
-                    "userCount": 42103,
-                    "nameCode": "NFO",
-                    "national": false,
-                    "type": 0,
-                    "id": 14,
-                    "teamColors": {
-                        "primary": "#cc0000",
-                        "secondary": "#cc0000",
-                        "text": "#cc0000"
-                    }
-                },
-                {
-                    "name": "Fulham",
-                    "slug": "fulham",
-                    "shortName": "Fulham",
-                    "gender": "M",
-                    "sport": {
-                        "name": "Football",
-                        "slug": "football",
-                        "id": 1
-                    },
-                    "userCount": 77020,
-                    "nameCode": "FUL",
-                    "national": false,
-                    "type": 0,
-                    "id": 43,
-                    "teamColors": {
-                        "primary": "#ffffff",
-                        "secondary": "#000000",
-                        "text": "#000000"
-                    }
-                },
-                {
-                    "name": "AFC Bournemouth",
-                    "slug": "afc-bournemouth",
-                    "shortName": "Bournemouth",
-                    "gender": "M",
-                    "sport": {
-                        "name": "Football",
-                        "slug": "football",
-                        "id": 1
-                    },
-                    "userCount": 43615,
-                    "nameCode": "BOU",
-                    "disabled": false,
-                    "national": false,
-                    "type": 0,
-                    "id": 60,
-                    "teamColors": {
-                        "primary": "#000000",
-                        "secondary": "#cc0000",
-                        "text": "#cc0000"
-                    }
-                }
-            ],
-            "newcomersOther": [],
-            "numberOfCompetitors": 20,
-            "id": 21480,
-            "hostCountries": []
-        },
         "params": {
             "sport": "football",
             "category": "england",
@@ -357,87 +277,6 @@
             }
         ],
 
-        "info": {
-            "goals": 98,
-            "homeTeamWins": 15,
-            "awayTeamWins": 17,
-            "draws": 8,
-            "yellowCards": 225,
-            "redCards": 15,
-            "numberOfRounds": 38,
-            "newcomersUpperDivision": [],
-            "newcomersLowerDivision": [
-                {
-                    "name": "Real Valladolid",
-                    "slug": "real-valladolid",
-                    "shortName": "Valladolid",
-                    "gender": "M",
-                    "sport": {
-                        "name": "Football",
-                        "slug": "football",
-                        "id": 1
-                    },
-                    "userCount": 29801,
-                    "nameCode": "VLL",
-                    "national": false,
-                    "type": 0,
-                    "id": 2831,
-                    "teamColors": {
-                        "primary": "#ffffff",
-                        "secondary": "#663399",
-                        "text": "#663399"
-                    }
-                },
-                {
-                    "name": "UD Almería",
-                    "slug": "ud-almeria",
-                    "shortName": "Almería",
-                    "gender": "M",
-                    "sport": {
-                        "name": "Football",
-                        "slug": "football",
-                        "id": 1
-                    },
-                    "userCount": 28649,
-                    "nameCode": "ALM",
-                    "disabled": false,
-                    "national": false,
-                    "type": 0,
-                    "id": 2858,
-                    "teamColors": {
-                        "primary": "#ff0000",
-                        "secondary": "#ffffff",
-                        "text": "#ffffff"
-                    }
-                },
-                {
-                    "name": "Girona FC",
-                    "slug": "girona-fc",
-                    "shortName": "Girona",
-                    "gender": "M",
-                    "sport": {
-                        "name": "Football",
-                        "slug": "football",
-                        "id": 1
-                    },
-                    "userCount": 22245,
-                    "nameCode": "GIR",
-                    "disabled": false,
-                    "national": false,
-                    "type": 0,
-                    "id": 24264,
-                    "teamColors": {
-                        "primary": "#ffffff",
-                        "secondary": "#ff0000",
-                        "text": "#ff0000"
-                    }
-                }
-            ],
-            "newcomersOther": [],
-            "numberOfCompetitors": 20,
-            "id": 22348,
-            "hostCountries": ["Spain"]
-        },
         "params": {
             "sport": "football",
             "category": "spain",
@@ -479,70 +318,13 @@
             { "name": "Bundesliga 92/93", "year": "92/93", "id": 13088 }
         ],
 
-        "info": {
-            "goals": 135,
-            "homeTeamWins": 13,
-            "awayTeamWins": 19,
-            "draws": 13,
-            "yellowCards": 173,
-            "redCards": 10,
-            "newcomersUpperDivision": [],
-            "newcomersLowerDivision": [
-                {
-                    "name": "FC Schalke 04",
-                    "slug": "fc-schalke-04",
-                    "shortName": "Schalke 04",
-                    "gender": "M",
-                    "sport": {
-                        "name": "Football",
-                        "slug": "football",
-                        "id": 1
-                    },
-                    "userCount": 43326,
-                    "nameCode": "SCH",
-                    "disabled": false,
-                    "national": false,
-                    "type": 0,
-                    "id": 2530,
-                    "teamColors": {
-                        "primary": "#0541cd",
-                        "secondary": "#ffffff",
-                        "text": "#ffffff"
-                    }
-                },
-                {
-                    "name": "Werder Bremen",
-                    "slug": "werder-bremen",
-                    "shortName": "Bremen",
-                    "gender": "M",
-                    "sport": {
-                        "name": "Football",
-                        "slug": "football",
-                        "id": 1
-                    },
-                    "userCount": 30014,
-                    "nameCode": "SVW",
-                    "national": false,
-                    "type": 0,
-                    "id": 2534,
-                    "teamColors": {
-                        "primary": "#009966",
-                        "secondary": "#ffffff",
-                        "text": "#ffffff"
-                    }
-                }
-            ],
-            "newcomersOther": [],
-            "numberOfCompetitors": 18,
-            "id": 22281,
-            "hostCountries": []
-        },
         "params": {
             "sport": "football",
             "category": "germany",
             "tournament": "bundesliga",
             "id": "35",
-            "list": "PL0fNrAOa7mzCfnJcb7Zc5SxOsWvWkno2V",
+            "list2": "PL0fNrAOa7mzCfnJcb7Zc5SxOsWvWkno2V",
+            "list": "PLxbDrTU0IHWc5ViR9ge39-mJbEuIWpcQo",
             "channelId": "UCoqrrrfDpWOgdqw1vRoiG_A",
             "listLength": 10
         }
@@ -577,84 +359,6 @@
             { "name": "Division 1 97/98", "year": "97/98", "id": 65 }
         ],
 
-        "info": {
-            "goals": 194,
-            "homeTeamWins": 22,
-            "awayTeamWins": 21,
-            "draws": 16,
-            "yellowCards": 230,
-            "redCards": 29,
-            "newcomersUpperDivision": [],
-            "newcomersLowerDivision": [
-                {
-                    "name": "AJ Auxerre",
-                    "slug": "aj-auxerre",
-                    "shortName": "Auxerre",
-                    "gender": "M",
-                    "sport": {
-                        "name": "Football",
-                        "slug": "football",
-                        "id": 1
-                    },
-                    "userCount": 14302,
-                    "nameCode": "AUX",
-                    "national": false,
-                    "type": 0,
-                    "id": 1646,
-                    "teamColors": {
-                        "primary": "#ffffff",
-                        "secondary": "#0033ff",
-                        "text": "#0033ff"
-                    }
-                },
-                {
-                    "name": "AC Ajaccio",
-                    "slug": "ac-ajaccio",
-                    "shortName": "Ajaccio",
-                    "gender": "M",
-                    "sport": {
-                        "name": "Football",
-                        "slug": "football",
-                        "id": 1
-                    },
-                    "userCount": 13067,
-                    "nameCode": "ACA",
-                    "national": false,
-                    "type": 0,
-                    "id": 1660,
-                    "teamColors": {
-                        "primary": "#ffffff",
-                        "secondary": "#ff0000",
-                        "text": "#ff0000"
-                    }
-                },
-                {
-                    "name": "Toulouse",
-                    "slug": "toulouse",
-                    "shortName": "Toulouse",
-                    "gender": "M",
-                    "sport": {
-                        "name": "Football",
-                        "slug": "football",
-                        "id": 1
-                    },
-                    "userCount": 28444,
-                    "nameCode": "TFC",
-                    "national": false,
-                    "type": 0,
-                    "id": 1681,
-                    "teamColors": {
-                        "primary": "#660099",
-                        "secondary": "#ffffff",
-                        "text": "#ffffff"
-                    }
-                }
-            ],
-            "newcomersOther": [],
-            "numberOfCompetitors": 20,
-            "id": 22282,
-            "hostCountries": []
-        },
         "params": {
             "sport": "football",
             "category": "france",
@@ -695,85 +399,6 @@
             { "name": "Serie A 97/98", "year": "97/98", "id": 85 }
         ],
 
-        "info": {
-            "goals": 122,
-            "homeTeamWins": 21,
-            "awayTeamWins": 10,
-            "draws": 19,
-            "yellowCards": 213,
-            "redCards": 7,
-            "numberOfRounds": 38,
-            "newcomersUpperDivision": [],
-            "newcomersLowerDivision": [
-                {
-                    "name": "Lecce",
-                    "slug": "lecce",
-                    "shortName": "Lecce",
-                    "gender": "M",
-                    "sport": {
-                        "name": "Football",
-                        "slug": "football",
-                        "id": 1
-                    },
-                    "userCount": 27895,
-                    "nameCode": "LEC",
-                    "national": false,
-                    "type": 0,
-                    "id": 2689,
-                    "teamColors": {
-                        "primary": "#f6ea00",
-                        "secondary": "#db2d1f",
-                        "text": "#db2d1f"
-                    }
-                },
-                {
-                    "name": "Monza",
-                    "slug": "monza",
-                    "shortName": "Monza",
-                    "gender": "M",
-                    "sport": {
-                        "name": "Football",
-                        "slug": "football",
-                        "id": 1
-                    },
-                    "userCount": 22724,
-                    "nameCode": "MON",
-                    "national": false,
-                    "type": 0,
-                    "id": 2729,
-                    "teamColors": {
-                        "primary": "#d71742",
-                        "secondary": "#ffffff",
-                        "text": "#ffffff"
-                    }
-                },
-                {
-                    "name": "Cremonese",
-                    "slug": "cremonese",
-                    "shortName": "Cremonese",
-                    "gender": "M",
-                    "sport": {
-                        "name": "Football",
-                        "slug": "football",
-                        "id": 1
-                    },
-                    "userCount": 15779,
-                    "nameCode": "CRE",
-                    "national": false,
-                    "type": 0,
-                    "id": 2761,
-                    "teamColors": {
-                        "primary": "#c8091d",
-                        "secondary": "#a9a7a7",
-                        "text": "#a9a7a7"
-                    }
-                }
-            ],
-            "newcomersOther": [],
-            "numberOfCompetitors": 20,
-            "id": 21697,
-            "hostCountries": ["Italy"]
-        },
         "params": {
             "sport": "football",
             "category": "italy",

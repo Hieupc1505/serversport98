@@ -13,7 +13,9 @@ db.connect();
 app.use(cors());
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(bodyParser.json());
-
+// setInterval(() => {
+//     console.log("update");
+// }, 1 * 60 * 1000);
 routerCustom(app);
 
 // if (process.env.NODE_ENV === "production") {

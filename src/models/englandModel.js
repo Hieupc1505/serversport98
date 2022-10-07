@@ -10,25 +10,7 @@ const englandModel = new Schema(
             nation: Joi.string(),
             id: Joi.number(),
         }),
-        rows: Joi.array().items(
-            Joi.object({
-                team: Joi.object({
-                    name: Joi.string().required(),
-                    slug: Joi.string().case("lower").required(),
-                    shortName: Joi.string().required(),
-                    id: Joi.number().integer().required(),
-                }),
-                position: Joi.number().required(),
-                matches: Joi.number().required(),
-                wins: Joi.number().required(),
-                losses: Joi.number().required(),
-                draws: Joi.number().required(),
-                scoresFor: Joi.number().required(),
-                scoresAgainst: Joi.number().required(),
-                points: Joi.number().required(),
-                id: Joi.number().required(),
-            })
-        ),
+        rows: Joi.array().items(Joi.array().items(Joi.object())),
         topPlayers: Joi.object({
             rating: Joi.array().items(
                 Joi.object({
@@ -209,6 +191,14 @@ const englandModel = new Schema(
             )
         ),
         teamEvents: Joi.object(),
+        rounds: Joi.object({
+            currentRound: Joi.object({
+                round: Joi.number(),
+            }),
+            rounds: Joi.object({
+                round: Joi.number(),
+            }),
+        }),
     },
     {
         timestamps: true,
@@ -223,4 +213,4 @@ englandModel.pre("save", function (next) {
     next();
 });
 
-module.exports = mongoose.model("englands", englandModel);
+module.exports = mongoose.model("leagues", englandModel);
