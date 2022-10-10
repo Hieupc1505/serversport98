@@ -10,6 +10,7 @@ const {
 //api/sports
 route.get("/live-match", sportController.getLiveSofa);
 route.get("/vebo", sportController.getLiveMatch);
+route.get("/test", sportController.getTest);
 
 route.get("/:nation/charts/:id", udCharts, sportController.getCharts);
 route.get("/:nation/match", udMatch, sportController.getMatch);

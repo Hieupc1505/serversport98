@@ -1,7 +1,6 @@
 const nations = require("../Library/nation.json");
 const { default: axios } = require("axios");
 const createError = require("http-errors");
-const englandsModel = require("../models/englandModel");
 const {
     addCharts,
     addTeamEvent,
@@ -35,6 +34,7 @@ const updateSport = {
             next();
         } catch (err) {
             console.log("have err udMatch");
+
             next();
         }
     },

@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const Schema = mongoose.Schema;
 const Joi = require("joi");
 
-const hightLight = new Schema({
+const highLight = new Schema({
     nation: Joi.string(),
     publishedAt: Joi.string(),
     title: Joi.string(),
@@ -12,4 +12,4 @@ const hightLight = new Schema({
     },
 });
 
-module.exports = mongoose.model("highlights", hightLight);
+module.exports = mongoose.model("highlights", highLight);

@@ -4,52 +4,56 @@ const createError = require("http-errors");
 const rp = require("request-promise");
 const cheerio = require("cheerio");
 const _ = require("lodash");
-const englandsModel = require("../models/englandModel");
+const leaguesModel = require("../models/leaguesModel");
 const hightLight = require("../models/hightLight");
 
 async function getLastFiveMatch(data) {
     // const { data } = await axios.get(link);
-    const tag = Object.keys(data); //layas id giai doi truong
-    // const list = data; //lay id cua doi
-    let resp = {};
+    if (data) {
+        const tag = Object.keys(data); //layas id giai doi truong
+        // const list = data; //lay id cua doi
+        let resp = {};
 
-    tag.forEach((obj) => {
-        //lap tung keys teamEvents
-        let state = {};
+        tag.forEach((obj) => {
+            //lap tung keys teamEvents
+            let state = {};
 
-        let lib = data[obj]; // value cuar 1462
+            let lib = data[obj]; // value cuar 1462
 
-        for (let item in lib) {
-            //tung key of object trong 1462
-            let mc = lib[item];
-            let num = item;
-            let mct = [];
-            // console.log(mc);
-            for (let team of mc) {
-                let ob = {};
-                const winTeam = team.winnerCode;
-                if (team.winnerCode === 1) {
-                    if (team.homeTeam.id === Number.parseInt(num)) ob.win = 1;
-                    else ob.win = -1;
-                } else if (team.winnerCode === 2) {
-                    if (team.awayTeam.id === Number.parseInt(num)) ob.win = 1;
-                    else ob.win = -1;
-                } else ob.win = 0;
-                ob.match = `${team.homeTeam.shortName} - ${team.awayTeam.shortName}`;
-                ob.score = `${team.homeScore.current} - ${team.awayScore.current}`;
-                ob.time = new Date(
-                    team.startTimestamp * 1000
-                ).toLocaleDateString();
-                ob.customId = team.customId;
-                ob.slug = team.slug;
-                mct.push(ob);
+            for (let item in lib) {
+                //tung key of object trong 1462
+                let mc = lib[item];
+                let num = item;
+                let mct = [];
+                // console.log(mc);
+                for (let team of mc) {
+                    let ob = {};
+                    const winTeam = team.winnerCode;
+                    if (team.winnerCode === 1) {
+                        if (team.homeTeam.id === Number.parseInt(num))
+                            ob.win = 1;
+                        else ob.win = -1;
+                    } else if (team.winnerCode === 2) {
+                        if (team.awayTeam.id === Number.parseInt(num))
+                            ob.win = 1;
+                        else ob.win = -1;
+                    } else ob.win = 0;
+                    ob.match = `${team.homeTeam.shortName} - ${team.awayTeam.shortName}`;
+                    ob.score = `${team.homeScore.current} - ${team.awayScore.current}`;
+                    ob.time = new Date(
+                        team.startTimestamp * 1000
+                    ).toLocaleDateString();
+                    ob.customId = team.customId;
+                    ob.slug = team.slug;
+                    mct.push(ob);
+                }
+                state[`${num}`] = mct;
             }
-            state[`${num}`] = mct;
-        }
-        resp = { ...resp, ...state };
-    });
+            resp = { ...resp, ...state };
+        });
 
-    return resp;
+        return resp;
+    }
 }
 const getString = (tt) => {
     let tar = tt.split(" - ");
@@ -97,7 +101,7 @@ class sportController {
         const time = new Date();
         const { id, nation } = req.params;
         try {
-            const [query] = await englandsModel.aggregate([
+            const [query] = await leaguesModel.aggregate([
                 { $match: { "tournament.nation": nation } },
                 {
                     $project: {
@@ -127,7 +131,7 @@ class sportController {
             const { currentRound, rounds } = req.rounds;
             const { nation } = req.params;
 
-            const [query] = await englandsModel.aggregate([
+            const [query] = await leaguesModel.aggregate([
                 { $match: { "tournament.nation": nation } },
                 {
                     $project: {
@@ -190,10 +194,8 @@ class sportController {
         const { nation } = req.params;
 
         try {
-            const { topPlayers } = req;
-
             res.status(200).json({
-                data: topPlayers,
+                data: req.topPlayers,
             });
         } catch (err) {
             return next(
@@ -507,6 +509,14 @@ class sportController {
             );
             res.status(200).json({ id: result[0].id.videoId });
         }
+    }
+    async getTest(req, res, next) {
+        const data = await leaguesModel.find({
+            "tournament.nation": "england",
+        });
+        res.status(200).json({
+            data,
+        });
     }
 }
 

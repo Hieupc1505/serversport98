@@ -2,7 +2,7 @@ const mongoose = require("mongoose");
 const { Schema } = mongoose;
 const Joi = require("joi");
 
-const englandModel = new Schema(
+const leaguesModel = new Schema(
     {
         tournament: Joi.object({
             name: Joi.string(),
@@ -208,9 +208,9 @@ const englandModel = new Schema(
 // userSchema.methods.updateOrders = function (orderData) {
 //     console.log(this);
 // };
-englandModel.pre("save", function (next) {
-    console.log(this);
-    next();
-});
+// leaguesModel.pre("save", function (next) {
+//     console.log(this);
+//     next();
+// });
 
-module.exports = mongoose.model("leagues", englandModel);
+module.exports = mongoose.model("leagues", leaguesModel);

@@ -1,7 +1,7 @@
 const axios = require("axios");
 const fs = require("fs");
 const path = require("path");
-const englandsModel = require("../models/englandModel");
+const leaguesModel = require("../models/leaguesModel");
 const hightLight = require("../models/hightLight");
 const nations = require("../Library/nation.json");
 const _ = require("lodash");
@@ -20,18 +20,19 @@ const getRequest = async (url) => {
 
 const checkUpdate = async (nation) => {
     const timeNow = new Date();
-    const [query] = await englandsModel.find(
+    const [query] = await leaguesModel.find(
         {
             "tournament.nation": nation,
         },
-        "updatedAt -_id"
+        { updatedAt: 1, _id: 0 }
     );
 
     const pass = (timeNow - query.updatedAt) / (1000 * 60 * 60);
     return pass > 7 ? true : false;
 };
 const getField = async (field, nation) => {
-    const [query] = await englandsModel.find(
+    console.log(field, nation);
+    const [query] = await leaguesModel.find(
         {
             "tournament.nation": nation,
         },
@@ -40,7 +41,7 @@ const getField = async (field, nation) => {
     return query[field];
 };
 const comparseMatch = async (data, field, round, nation) => {
-    const [query] = await englandsModel.aggregate([
+    const [query] = await leaguesModel.aggregate([
         { $match: { "tournament.nation": nation } },
         {
             $project: {
@@ -61,21 +62,24 @@ class writeFile {
             const charts = await getField("rows", nation);
 
             result = charts;
+
             let {
                 data: { standings },
             } = await axios.get(
-                `thttps://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/standings/total`
+                `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/standings/total`
             );
+            const rows = standings.map((item) => item.rows);
 
-            if (
-                (await checkUpdate(nation)) ||
-                !_.isEqual(standings[0].rows, charts)
-            ) {
+            if ((await checkUpdate(nation)) || !_.isEqual(rows, charts)) {
                 console.log("update charts");
-                const resp = await englandsModel
+                const resp = await leaguesModel
                     .findOneAndUpdate(
                         { "tournament.nation": nation },
-                        { $set: { rows: standings[0].rows } },
+                        {
+                            $set: {
+                                rows,
+                            },
+                        },
                         { new: true }
                     )
                     .select("rows -_id");
@@ -83,11 +87,47 @@ class writeFile {
                 return;
             }
             req.charts = charts;
-            return;
         } catch (err) {
             req.charts = result;
-
+            console.log(err);
             throw new Error("handle update charts error");
+        }
+    }
+    async addTeamEvent(nation, req) {
+        let result;
+        try {
+            const info = await checkNation(nation, 0);
+            const teamEvents = await getField("teamEvents", nation);
+            result = teamEvents;
+            let {
+                data: { tournamentTeamEvents },
+            } = await axios.get(
+                `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/team-events/total`
+            );
+            if (
+                (await checkUpdate(nation)) ||
+                !_.isEqual(tournamentTeamEvents, teamEvents)
+            ) {
+                console.log("update teamevents");
+                const resp = await leaguesModel
+                    .findOneAndUpdate(
+                        { "tournament.nation": nation },
+                        {
+                            $set: {
+                                teamEvents: tournamentTeamEvents,
+                            },
+                        },
+                        { new: true }
+                    )
+                    .select("teamEvents -_id");
+                req.teamEvents = resp.teamEvents;
+                return;
+            }
+            req.teamEvents = teamEvents;
+            return;
+        } catch (err) {
+            req.teamEvents = result;
+            throw new Error("axios request error");
         }
     }
     async addRounds(nation, req) {
@@ -96,12 +136,13 @@ class writeFile {
             const info = await checkNation(nation, 0);
             const rounds = await getField("rounds", nation);
             result = rounds;
+
             let { data } = await axios.get(
                 `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/rounds`
             );
             if ((await checkUpdate(nation)) || !_.isEqual(data, rounds)) {
                 console.log("update rounds");
-                const resp = await englandsModel
+                const resp = await leaguesModel
                     .findOneAndUpdate(
                         { "tournament.nation": nation },
                         { $set: { rounds: data } },
@@ -115,6 +156,7 @@ class writeFile {
             return;
         } catch (err) {
             req.rounds = result;
+            console.log(err);
             throw new Error("have error at addRoudns");
         }
 
@@ -148,6 +190,7 @@ class writeFile {
                 } = await axios.get(
                     `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/top-players/overall`
                 );
+
                 const result2 = {
                     rating: topPlayers.rating,
                     goals: topPlayers.goals,
@@ -160,7 +203,7 @@ class writeFile {
                     !_.isEqual(result, result2)
                 ) {
                     console.log("update topplayers");
-                    const resp = await englandsModel
+                    const resp = await leaguesModel
                         .findOneAndUpdate(
                             { "tournament.nation": nation },
                             {
@@ -171,6 +214,7 @@ class writeFile {
                             { new: true }
                         )
                         .select("topPlayers -_id");
+
                     req.topPlayers = resp.topPlayers;
                     return;
                 }
@@ -179,20 +223,14 @@ class writeFile {
             }
         } catch (err) {
             req.topPlayers = result;
+            console.log(err);
             throw new Error("have an error from addTopPlayers");
         }
     }
     async addMatch(nation, roundsInfo) {
-        let result;
         try {
             const info = await checkNation(nation, 0);
 
-            // const [roundsInfo] = await englandsModel.find(
-            //     {
-            //         "tournament.nation": nation,
-            //     },
-            //     { rounds: 1, _id: 0 }
-            // );
             const { currentRound, rounds } = roundsInfo;
 
             const data = await getRequest(
@@ -210,7 +248,7 @@ class writeFile {
                 ))
             ) {
                 console.log("update match");
-                await englandsModel.updateOne(
+                await leaguesModel.updateOne(
                     { "tournament.nation": nation },
                     { $set: { [`matches.${index}.events`]: data.events } }
                 );
@@ -231,61 +269,25 @@ class writeFile {
             );
         });
     }
-    async addTeamEvent(nation, req) {
-        let result;
-        try {
-            const info = await checkNation(nation, 0);
-            const teamEvents = await getField("teamEvents", nation);
-            result = teamEvents;
-            let {
-                data: { tournamentTeamEvents },
-            } = await axios.get(
-                `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/team-events/total`
-            );
-            if (
-                (await checkUpdate(nation)) ||
-                !_.isEqual(tournamentTeamEvents, teamEvents)
-            ) {
-                console.log("update teamevents");
-                const resp = await englandsModel
-                    .updateOne(
-                        { "tournament.nation": nation },
-                        {
-                            $set: {
-                                teamEvents: tournamentTeamEvents,
-                            },
-                        },
-                        { new: true }
-                    )
-                    .select("teamEvents -_id");
-                req.teamEvents = resp.teamEvents;
-                return;
-            }
-            req.teamEvents = teamEvents;
-            return;
-        } catch (err) {
-            req.teamEvents = result;
-            throw new Error("axios request error");
-        }
-    }
+
     async setCharts(req, res, next) {
-        Object.keys(nations).forEach(async (item) => {
-            const info = await checkNation(item, 0);
-            let {
-                data: { standings },
-            } = await axios.get(
-                `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/standings/total`
-            );
-            const result = standings.map((item) => item.rows);
-            await englandsModel.updateOne(
-                { "tournament.nation": item },
-                {
-                    $set: {
-                        rows: result,
-                    },
-                }
-            );
-        });
+        // Object.keys(nations).forEach(async (item) => {
+        const info = await checkNation(req.params.nation, 0);
+        let {
+            data: { standings },
+        } = await axios.get(
+            `https://api.sofascore.com/api/v1/unique-tournament/${info.idNation}/season/${info.season.id}/standings/total`
+        );
+        const result = standings.map((item) => item.rows);
+        await leaguesModel.updateOne(
+            { "tournament.nation": "england" },
+            {
+                $set: {
+                    rows: result,
+                },
+            }
+        );
+        // });
         // const info = await checkNation("c1", 0);
         // let {
         //     data: { standings },
@@ -411,14 +413,6 @@ class writeFile {
                 updateDate(nation, result);
             }
         }
-
-        // Object.keys(nations).forEach(async (nation, index) => {
-        //     // let list = [];
-        //     result = [];
-        //     setTimeout(() => {
-        //         apiCall(nation);
-        //     }, index * 1000);
-        // });
         apiCall(nation);
     }
     async updateHigh(req, res, next) {
