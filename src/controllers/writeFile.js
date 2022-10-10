@@ -416,9 +416,9 @@ class writeFile {
         apiCall(nation);
     }
     async updateHigh(req, res, next) {
-        await hightLight.updateMany({}, [
-            { $set: { createdAt: { $toDate: "$publishedAt" } } },
-        ]);
+        console.log("hight");
+        const ele = await leaguesModel.find({ "tournament.nation": "england" });
+        res.status(200).json({ ele });
     }
 }
 
