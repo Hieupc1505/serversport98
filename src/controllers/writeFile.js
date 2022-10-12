@@ -89,7 +89,7 @@ class writeFile {
             req.charts = charts;
         } catch (err) {
             req.charts = result;
-            console.log(err);
+            // console.log(err);
             throw new Error("handle update charts error");
         }
     }
@@ -156,7 +156,7 @@ class writeFile {
             return;
         } catch (err) {
             req.rounds = result;
-            console.log(err);
+            // console.log(err);
             throw new Error("have error at addRoudns");
         }
 
@@ -223,7 +223,7 @@ class writeFile {
             }
         } catch (err) {
             req.topPlayers = result;
-            console.log(err);
+            // console.log(err);
             throw new Error("have an error from addTopPlayers");
         }
     }
@@ -340,7 +340,7 @@ class writeFile {
                     );
                 })
                 .catch((err) => {
-                    console.log(err);
+                    // console.log(err);
                     // return next(
                     //     createError("500", "Internal server error at Playlist")
                     // );
@@ -414,11 +414,6 @@ class writeFile {
             }
         }
         apiCall(nation);
-    }
-    async updateHigh(req, res, next) {
-        console.log("hight");
-        const ele = await leaguesModel.find({ "tournament.nation": "england" });
-        res.status(200).json({ ele });
     }
 }
 

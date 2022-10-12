@@ -90,7 +90,7 @@ class sportController {
                 timmer: new Date() - time + "ms",
             });
         } catch (err) {
-            console.log(err);
+            // console.log(err);
             return next(
                 createError("500", "Internal server error at getCharts")
             );
@@ -118,7 +118,7 @@ class sportController {
                 timmer: new Date() - time + "ms",
             });
         } catch (err) {
-            console.log(err);
+            // console.log(err);
             return next(
                 createError("500", "Internal server error at get Rounds")
             );
@@ -183,7 +183,7 @@ class sportController {
                 timmer: new Date() - time + "ms",
             });
         } catch (err) {
-            console.log(err);
+            // console.log(err);
             return next(
                 createError("500", "Internal server error at getMatch")
             );
@@ -218,7 +218,7 @@ class sportController {
                 data,
             });
         } catch (err) {
-            console.log(err);
+            // console.log(err);
             res.status(200).json({
                 message: "err",
                 data: [],
@@ -250,111 +250,117 @@ class sportController {
                 .catch(function (err) {
                     console.log(err);
                 });
+
             rp(options(arrLink[0]))
                 .then(function ($) {
                     let arr = [];
                     let origin = $('link[rel="canonical"]').attr("href");
-                    $(".match_list.match_list-grid .item.item-hot").each(
-                        (i, el) => {
-                            const item = $(el);
-                            let homeName = item
-                                    .find(".team-home .team-name")
-                                    .text(),
-                                awayName = item
-                                    .find(".team-away .team-name")
-                                    .text();
-                            arr[i] = {
-                                link:
-                                    origin.slice(0, origin.lastIndexOf("/")) +
-                                    item.find("a").attr("href"),
-                                league: {
-                                    name: item.find("div.item-league").text(),
-                                    img: item
-                                        .find(".league-icon img")
-                                        .attr("src"),
-                                },
-                                home: {
-                                    name: homeName,
-                                    logo: item
-                                        .find(".team-home .team-logo img")
-                                        .attr("src"),
-                                    // score: item
-                                    //     .find(".item-info .result .home-score")
-                                    //     .text(),
-                                },
-                                away: {
-                                    name: awayName,
-                                    logo: item
-                                        .find(".team-away .team-logo img")
-                                        .attr("src"),
-                                    // score: item
-                                    //     .find(".item-info .result .away-score")
-                                    //     .text(),
-                                },
-                                commentator: Array.from(
-                                    new Set(
+                    if (origin)
+                        $(".match_list.match_list-grid .item.item-hot").each(
+                            (i, el) => {
+                                const item = $(el);
+                                let homeName = item
+                                        .find(".team-home .team-name")
+                                        .text(),
+                                    awayName = item
+                                        .find(".team-away .team-name")
+                                        .text();
+                                arr[i] = {
+                                    link:
+                                        origin.slice(
+                                            0,
+                                            origin.lastIndexOf("/")
+                                        ) + item.find("a").attr("href"),
+                                    league: {
+                                        name: item
+                                            .find("div.item-league")
+                                            .text(),
+                                        img: item
+                                            .find(".league-icon img")
+                                            .attr("src"),
+                                    },
+                                    home: {
+                                        name: homeName,
+                                        logo: item
+                                            .find(".team-home .team-logo img")
+                                            .attr("src"),
+                                        // score: item
+                                        //     .find(".item-info .result .home-score")
+                                        //     .text(),
+                                    },
+                                    away: {
+                                        name: awayName,
+                                        logo: item
+                                            .find(".team-away .team-logo img")
+                                            .attr("src"),
+                                        // score: item
+                                        //     .find(".item-info .result .away-score")
+                                        //     .text(),
+                                    },
+                                    commentator: Array.from(
+                                        new Set(
+                                            item
+                                                .find(".commentator")
+                                                .text()
+                                                .split("\n")
+                                        )
+                                    ).join(""),
+                                };
+                                let liveStatus = (function () {
+                                    let day =
                                         item
-                                            .find(".commentator")
+                                            .find(
+                                                ".item-info.block-info-pending .time"
+                                            )
+                                            .text() || null;
+                                    let time =
+                                        item
+                                            .find(
+                                                ".item-info.block-info-pending .status"
+                                            )
+                                            .text() || null;
+
+                                    if (day) {
+                                        let tar =
+                                            day.replace(
+                                                /(\d+[/])(\d+[/])/,
+                                                "$2$1"
+                                            ) +
+                                            " " +
+                                            time;
+                                        return new Date(
+                                            tar.replaceAll("\n", "")
+                                        ).getTime() > new Date().getTime
+                                            ? true
+                                            : false;
+                                    } else return true;
+                                })();
+
+                                arr[i].status = {
+                                    live: liveStatus,
+                                    homeScore: item
+                                        .find(".item-info .result .home-score")
+                                        .text(),
+                                    awayScore: item
+                                        .find(".item-info .result .away-score")
+                                        .text(),
+                                    timeLoaded:
+                                        item
+                                            .find(
+                                                ".item-info.block-info-pending .status"
+                                            )
                                             .text()
-                                            .split("\n")
-                                    )
-                                ).join(""),
-                            };
-                            let liveStatus = (function () {
-                                let day =
-                                    item
-                                        .find(
-                                            ".item-info.block-info-pending .time"
-                                        )
-                                        .text() || null;
-                                let time =
-                                    item
-                                        .find(
-                                            ".item-info.block-info-pending .status"
-                                        )
-                                        .text() || null;
-
-                                if (day) {
-                                    let tar =
-                                        day.replace(
-                                            /(\d+[/])(\d+[/])/,
-                                            "$2$1"
-                                        ) +
-                                        " " +
-                                        time;
-                                    return new Date(
-                                        tar.replaceAll("\n", "")
-                                    ).getTime() > new Date().getTime
-                                        ? true
-                                        : false;
-                                } else return true;
-                            })();
-
-                            arr[i].status = {
-                                live: liveStatus,
-                                homeScore: item
-                                    .find(".item-info .result .home-score")
-                                    .text(),
-                                awayScore: item
-                                    .find(".item-info .result .away-score")
-                                    .text(),
-                                timeLoaded:
-                                    item
-                                        .find(
-                                            ".item-info.block-info-pending .status"
-                                        )
-                                        .text()
-                                        .replaceAll("\n", "") || null,
-                                day:
-                                    item
-                                        .find(
-                                            ".item-info.block-info-pending .time"
-                                        )
-                                        .text()
-                                        .replaceAll("\n", "") || null,
-                            };
-                        }
-                    );
+                                            .replaceAll("\n", "") || null,
+                                    day:
+                                        item
+                                            .find(
+                                                ".item-info.block-info-pending .time"
+                                            )
+                                            .text()
+                                            .replaceAll("\n", "") || null,
+                                };
+                            }
+                        );
                     res.status(200).json({
                         message: "success",
                         live: arr,
@@ -362,6 +368,7 @@ class sportController {
                     });
                 })
                 .catch((err) => {
+                    console.log(err);
                     next(
                         createError(
                             "500",
@@ -470,9 +477,10 @@ class sportController {
             });
         } catch (err) {
             // console.log(err);
-            return next(
-                createError("500", "Internal server error at getLiveSofa")
-            );
+            res.json({
+                mes: "fail",
+                live: [],
+            });
         }
     }
     async getVideo(req, res, next) {
@@ -504,10 +512,18 @@ class sportController {
                     regionCode: "VN",
                 },
             });
+            console.log(data);
             const result = data.items.filter(
                 (item) => item.snippet.channelId === c
             );
-            res.status(200).json({ id: result[0].id.videoId });
+            if (result[0]) res.status(200).json({ id: result[0].id.videoId });
+            else {
+                if (data.items[0])
+                    res.status(200).json({
+                        id: data.items[0].id.videoId,
+                    });
+                else res.status(200).json({ id: null });
+            }
         }
     }
     async getTest(req, res, next) {
